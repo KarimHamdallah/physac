@@ -56,6 +56,10 @@ namespace physac
         {
             return sqrtf(x * x + y * y);
         }
+        float mag_sqrd() const
+        {
+            return (x * x + y * y);
+        }
 
         // operator overloading
         Vec2  operator+ (const Vec2& v) const { return { x + v.x, y + v.y }; }

@@ -23,10 +23,20 @@ int main()
 {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "physac");
 
+    // Start
     physac::particle p;
     p.pos = { 100.0f, 100.0f };
     p.velocity = { 0.0f, 0.0f };
-    p.raduis = 10.0f;
+    p.mass = 3.0f;
+    p.raduis = 10.0f * p.mass;
+
+    physac::particle anchor;
+    anchor.pos = { WINDOW_WIDTH * 0.5f, 20.0f };
+    anchor.raduis = 5.0f;
+
+    physac::particle bob;
+    bob.pos = { WINDOW_WIDTH * 0.5f, 220.0f };
+    bob.raduis = 10.0f;
 
 
     while (!WindowShouldClose())
@@ -42,11 +52,19 @@ int main()
 
 
         // Update
+        p.AddGravityForce(9.8f * PIXELS_PER_METER);
+        physac::Vec2 wind_force = physac::Vec2(10.0f * PIXELS_PER_METER, 0.0f);
+        physac::Vec2 drag = physac::GenerateDragForce(p, 0.001f);
+        p.AddForce(wind_force);
+        p.AddForce(drag);
+        p.Integrate(deltaTime);
 
-        p.acceleration = { 2.0f * PIXELS_PER_METER, GRAVITY * PIXELS_PER_METER };
-        // Euler integration
-        p.velocity += p.acceleration * deltaTime;
-        p.pos += p.velocity * deltaTime;
+
+
+        // spring physics
+        bob.AddGravityForce(9.8f * PIXELS_PER_METER);
+        bob.AddForce(physac::GenerateSpringForce(bob, anchor.pos, 200.0f, 20.0f));
+        bob.Integrate(deltaTime);
 
 
         // collision
@@ -76,6 +94,10 @@ int main()
         BeginDrawing();
         ClearBackground(BLACK);
         Renderer::draw_particle(p.pos, p.raduis, RED);
+        // render spring
+        DrawLine(anchor.pos.x, anchor.pos.y, bob.pos.x, bob.pos.y, WHITE);
+        Renderer::draw_particle(anchor.pos, anchor.raduis, WHITE);
+        Renderer::draw_particle(bob.pos, bob.raduis, GREEN);
         EndDrawing();
 
         while ((float)(GetTime() - currentTime) < TARGET_DT) {} // busy wait loop (Delay)
