@@ -1,6 +1,7 @@
 #pragma once
 #include <raylib.h>
 #include <physac/particle.h>
+#include <physac/verletparticle.h>
 
 namespace Renderer
 {

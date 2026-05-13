@@ -9,7 +9,7 @@ namespace physac
 		Vec2  velocity = {};
 		Vec2  acceleration = {};
 		float mass = 1.0f;
-		float raduis = 0.0f;
+		float radius = 4.0f;
 		Vec2 sumforces = 0.0f;
 
 		/*
@@ -46,6 +46,31 @@ namespace physac
 			pos += velocity * dt;
 
 			ClearForces();
+		}
+
+		void KeepInsideWindow(uint32_t window_width, uint32_t window_height)
+		{
+			if (pos.x < 0) // left border
+			{
+				pos.x = 0;
+				velocity.x *= -1.0f;
+			}
+			else if (pos.x >= window_width) // right border
+			{
+				pos.x = window_width;
+				velocity.x *= -1.0f;
+			}
+
+			if (pos.y < 0) // upper border
+			{
+				pos.y = 0;
+				velocity.y *= -1.0f;
+			}
+			else if (pos.y >= window_height) // bottom border
+			{
+				pos.y = window_height;
+				velocity.y *= -1.0f;
+			}
 		}
 	};
 
