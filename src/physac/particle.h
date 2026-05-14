@@ -11,6 +11,7 @@ namespace physac
 		float mass = 1.0f;
 		float radius = 4.0f;
 		Vec2 sumforces = 0.0f;
+		bool is_pinned = false;
 
 		/*
 		Forces
@@ -38,6 +39,9 @@ namespace physac
 
 		void Integrate(float dt)
 		{
+			if (is_pinned)
+				return;
+
 			// find acceleration based on forces
 			acceleration = sumforces / mass;
 
