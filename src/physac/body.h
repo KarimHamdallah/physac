@@ -124,11 +124,11 @@ namespace physac
 	};
 
 
-	class body
+	class Body
 	{
 	public:
-		body() {}
-		body(const Shape& shape, Vec2 position, float mass)
+		Body() {}
+		Body(const Shape& shape, Vec2 position, float mass)
 			: position(position)
 		{
 			this->shape = shape.Clone();
@@ -148,7 +148,7 @@ namespace physac
 				inv_inertia = 0.0f;
 		}
 
-		~body()
+		~Body()
 		{
 			delete shape;
 		}
@@ -245,5 +245,33 @@ namespace physac
 		float inv_inertia = 1.0f;
 
 		Shape* shape = nullptr;
+
+		bool is_colliding = false;
+	};
+
+
+	class CollisionDetection
+	{
+	public:
+
+		static bool IsColliding(Body* b1, Body* b2)
+		{
+			if (b1->shape->GetType() == ShapeType::CIRCLE && b2->shape->GetType() == ShapeType::CIRCLE)
+			{
+				return CircleVsCircle(b1, b2);
+			}
+		}
+
+		static bool CircleVsCircle(Body* b1, Body* b2)
+		{
+			physac::CircleShape* shape1 = (physac::CircleShape*)b1->shape;
+			physac::CircleShape* shape2 = (physac::CircleShape*)b2->shape;
+
+			Vec2 d = b2->position - b1->position;
+			float radius_sum = shape1->radius + shape2->radius;
+
+			bool is_colliding = (radius_sum * radius_sum) >= d.mag_sqrd();
+			return is_colliding;
+		}
 	};
 }
