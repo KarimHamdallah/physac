@@ -17,6 +17,7 @@ add_executable(physac
     src/physac/math/vec2.h
     src/physac/particle.h
     src/physac/verletparticle.h
+    src/physac/body.h
 )
 
 target_link_libraries(physac PRIVATE raylib)

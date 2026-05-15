@@ -1,12 +1,10 @@
-﻿#include <Renderer.h>
+﻿#include <raylib.h>
+#include <physac/body.h>
+#include <Renderer.h>
 #include <iostream>
-#include <vector>
-#include <format>
 
 #define WINDOW_WIDTH  1280
 #define WINDOW_HEIGHT 720
-
-using namespace physac;
 
 /////////// Timer
 
@@ -27,25 +25,8 @@ int main()
 
     // Start
 
-
-    int points_count = 10;
-    float rest_length = 30.0f;
-    float drag = 0.002f;
-    float spring = 350.0f;
-
-    std::vector<particle> points;
-    points.resize(points_count);
-    for (size_t i = 0; i < points_count; i++)
-    {
-        particle& p = points[i];
-
-        p.pos = Vec2(WINDOW_WIDTH * 0.5f, 50.0f + i * rest_length);
-        p.mass = 2.0f;
-        p.radius = 5.0f;
-
-        if (i == 0) // anchor
-            p.is_pinned = true;
-    }
+    physac::Vec2 screen_center = { WINDOW_WIDTH * 0.5f, WINDOW_HEIGHT * 0.5f };
+    physac::body body(physac::BoxShape(200.0f, 100.0f), screen_center, 1.0f);
 
     Vector2 mouse_pos = { 0.0f, 0.0f };
     Vector2 mouse_delta = { 0.0f, 0.0f };
@@ -58,64 +39,88 @@ int main()
         previousTime = currentTime;
 
         // Update
-        for (size_t i = 0; i < points.size(); i++)
-        {
-            particle& p = points[i];
-
-
-            // weight force
-            Vec2 gravity = Vec2(0.0f, p.mass * 9.8f * PIXELS_PER_METER);
-            p.AddForce(gravity);
-
-            // drag
-            Vec2 drag_force = physac::GenerateDragForce(p, drag);
-            p.AddForce(drag_force);
-
-            // spring
-            if (i < points.size() - 1)
-            {
-                Vec2 spring_force = physac::GenerateSpringForce(points[i], points[i + 1], rest_length, spring);
-                points[i].AddForce(spring_force);
-                points[i + 1].AddForce(spring_force * -1.0f);
-            }
-
-            p.Integrate(deltaTime);
-        }
-
-        if (IsKeyDown(KEY_SPACE))
-        {
-            for (size_t i = 0; i < points.size(); i++)
-            {
-                particle& p = points[i];
-                Vec2 wind_force = Vec2(30.0f * PIXELS_PER_METER, 0.0f);
-                p.AddForce(wind_force);
-            }
-
-        }
-
-
-        // mouse influence
         mouse_pos = GetMousePosition();
         mouse_delta = GetMouseDelta();
+
+        physac::Vec2 weight_force = { 0.0f, 9.8f * PIXELS_PER_METER };
+        //body.AddForce(weight_force);
+
+        float torque = 200.0f;
+        body.AddTorque(torque);
+
+        body.Integrate(deltaTime);
+
+        // Keep Inside Window
+
+        if (body.shape->GetType() == physac::ShapeType::CIRCLE)
+        {
+            physac::CircleShape* shape = (physac::CircleShape*)body.shape;
+            
+            if (body.position.x - shape->radius < 0.0f)
+            {
+                body.position.x = shape->radius;
+                body.velocity.x *= -0.9f;
+            }
+            if (body.position.x + shape->radius > WINDOW_WIDTH)
+            {
+                body.position.x = WINDOW_WIDTH - shape->radius;
+                body.velocity.x *= -0.9f;
+            }
+            if (body.position.y - shape->radius < 0.0f)
+            {
+                body.position.y = shape->radius;
+                body.velocity.y *= -0.9f;
+            }
+            if (body.position.y + shape->radius > WINDOW_HEIGHT)
+            {
+                body.position.y = WINDOW_HEIGHT - shape->radius;
+                body.velocity.y *= -0.9f;
+            }
+        }
+        else if(body.shape->GetType() == physac::ShapeType::BOX)
+        {
+            physac::BoxShape* shape = (physac::BoxShape*)body.shape;
+            physac::Vec2 extent = { shape->width * 0.5f, shape->height * 0.5f };
+
+
+            if (body.position.x - extent.x < 0.0f)
+            {
+                body.position.x = extent.x;
+                body.velocity.x *= -0.9f;
+            }
+            if (body.position.x + extent.x > WINDOW_WIDTH)
+            {
+                body.position.x = WINDOW_WIDTH - extent.x;
+                body.velocity.x *= -0.9f;
+            }
+            if (body.position.y - extent.y < 0.0f)
+            {
+                body.position.y = extent.y;
+                body.velocity.y *= -0.9f;
+            }
+            if (body.position.y + extent.y > WINDOW_HEIGHT)
+            {
+                body.position.y = WINDOW_HEIGHT - extent.y;
+                body.velocity.y *= -0.9f;
+            }
+        }
 
         // Draw
         BeginDrawing();
         ClearBackground(CLITERAL(Color) { 50, 50, 50, 255 });
-        
-        for (size_t i = 0; i < points.size(); i++)
-        {
-            if (i < points.size() - 1)
-            {
-                particle& p1 = points[i];
-                particle& p2 = points[i + 1];
-                DrawLine(p1.pos.x, p1.pos.y, p2.pos.x, p2.pos.y, YELLOW);
-            }
-        }
 
-        for (size_t i = 0; i < points.size(); i++)
+
+        if (body.shape->GetType() == physac::ShapeType::CIRCLE)
         {
-            particle& p = points[i];
-            DrawCircle(p.pos.x, p.pos.y, p.radius, i == 0 ? RED : WHITE);
+            physac::CircleShape* shape = (physac::CircleShape*)body.shape;
+
+            Renderer::draw_circle(body.position, shape->radius, body.rotation, WHITE);
+        }
+        else if (body.shape->GetType() == physac::ShapeType::BOX)
+        {
+            physac::BoxShape* shape = (physac::BoxShape*)body.shape;
+
+            Renderer::draw_polygon(body.position, shape->transformed_vertices, WHITE);
         }
 
         EndDrawing();
