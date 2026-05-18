@@ -1,5 +1,6 @@
 #include <physac/math/vec2.h>
 #include <vector>
+#include <iostream>
 
 namespace physac
 {
@@ -250,19 +251,36 @@ namespace physac
 	};
 
 
+	class Contact
+	{
+	public:
+		Contact() {}
+		~Contact() {}
+
+	public:
+		Body* a;
+		Body* b;
+
+		Vec2 start_point;
+		Vec2 end_point;
+
+		Vec2 normal;
+		float depth;
+	};
+
 	class CollisionDetection
 	{
 	public:
 
-		static bool IsColliding(Body* b1, Body* b2)
+		static bool IsColliding(Body* b1, Body* b2, Contact& c)
 		{
 			if (b1->shape->GetType() == ShapeType::CIRCLE && b2->shape->GetType() == ShapeType::CIRCLE)
 			{
-				return CircleVsCircle(b1, b2);
+				return CircleVsCircle(b1, b2, c);
 			}
 		}
 
-		static bool CircleVsCircle(Body* b1, Body* b2)
+		static bool CircleVsCircle(Body* b1, Body* b2, Contact& contact)
 		{
 			physac::CircleShape* shape1 = (physac::CircleShape*)b1->shape;
 			physac::CircleShape* shape2 = (physac::CircleShape*)b2->shape;
@@ -271,6 +289,15 @@ namespace physac
 			float radius_sum = shape1->radius + shape2->radius;
 
 			bool is_colliding = (radius_sum * radius_sum) >= d.mag_sqrd();
+
+			contact.a = b1;
+			contact.b = b2;
+
+			contact.normal = normalize_vec2(d);
+			contact.start_point = b2->position - (contact.normal * shape2->radius);
+			contact.end_point = b1->position + (contact.normal * shape1->radius);
+			contact.depth = radius_sum - d.mag();
+
 			return is_colliding;
 		}
 	};

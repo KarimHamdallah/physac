@@ -29,13 +29,15 @@ int main()
     std::vector<physac::Body*> bodies;
 
     physac::Body* body1 = new physac::Body(physac::CircleShape(50.0f), screen_center, 1.0f);
-    physac::Body* body2 = new physac::Body(physac::CircleShape(70.0f), screen_center - physac::Vec2(-200.0f, 0.0f), 1.0f);
+    physac::Body* body2 = new physac::Body(physac::CircleShape(70.0f), screen_center - physac::Vec2(-90.0f, 0.0f), 1.0f);
 
     bodies.push_back(body1);
     bodies.push_back(body2);
 
     Vector2 mouse_pos = { 0.0f, 0.0f };
     Vector2 mouse_delta = { 0.0f, 0.0f };
+
+    physac::Contact contact;
 
     while (!WindowShouldClose())
     {
@@ -72,15 +74,12 @@ int main()
             for (size_t j = i + 1; j < bodies.size(); j++)
             {
                 physac::Body* b2 = bodies[j];
-                if (physac::CollisionDetection::IsColliding(b1, b2))
+                b1->is_colliding = false;
+                b2->is_colliding = false;
+                if (physac::CollisionDetection::IsColliding(b1, b2, contact))
                 {
                     b1->is_colliding = true;
                     b2->is_colliding = true;
-                }
-                else
-                {
-                    b1->is_colliding = false;
-                    b2->is_colliding = false;
                 }
             }
         }
@@ -157,6 +156,12 @@ int main()
                 physac::CircleShape* shape = (physac::CircleShape*)body->shape;
 
                 Renderer::draw_circle(body->position, shape->radius, body->rotation, body->is_colliding ? RED : WHITE);
+
+                if (body->is_colliding)
+                {
+                    DrawCircle(contact.start_point.x, contact.start_point.y, 3.0f, GREEN);
+                    DrawCircle(contact.end_point.x, contact.end_point.y, 3.0f, GREEN);
+                }
             }
             else if (body->shape->GetType() == physac::ShapeType::BOX)
             {
